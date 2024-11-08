@@ -1,5 +1,9 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.Random;
 
 public class MineSweeper {
     private static class Tile extends JButton {
@@ -30,6 +34,7 @@ public class MineSweeper {
 
     // The board GRID
     Tile[][] mineBoard = new Tile[rows][cols];
+    ArrayList<Tile> mineList;
 
     MineSweeper() {
         frame.setVisible(true);
@@ -59,10 +64,85 @@ public class MineSweeper {
 
                 tile.setFocusable(false); // Disable focus
                 tile.setMargin(new Insets(0, 0, 0, 0)); // Remove button margin
-                tile.setFont(new Font("Arial", Font.PLAIN, 45));
-                tile.setText("X"); // Default
+                tile.setFont(new Font("Arial Unicode Ms", Font.PLAIN, 45));
+                tile.setText(""); // Default
                 boardPanel.add(tile);
+
+                // Mouse Listener
+                tile.addMouseListener(new MouseAdapter() {
+                    @Override
+                    public void mousePressed(MouseEvent e) {
+                        Tile tile = (Tile) e.getSource();
+
+                        // Left Click
+                        if (e.getButton() == MouseEvent.BUTTON1) {
+                            if (tile.getText().isEmpty()) {
+                                if (mineList.contains(tile)) {
+                                    revealMines();
+                                    JOptionPane.showMessageDialog(frame, "Game Over!");
+                                    disableBoard();
+                                }
+                                else {
+                                    tile.setText("0"); // Placeholder for no adjacent mines
+                                    tile.setEnabled(false); // Disable the tile
+                                    tile.setBackground(Color.LIGHT_GRAY); // Mark as revealed
+                                }
+                            }
+                        }
+                        // Obs: BUTTON3 "wheel"
+
+                        // Right Click (BUTTON3)
+                        if (e.getButton() == MouseEvent.BUTTON3) {
+                            if (tile.getText().isEmpty()) {
+                                tile.setText("🚩"); // Place flag
+                            }
+                            else if (tile.getText().equals("🚩")) {
+                                tile.setText(""); // Remove flag
+                            }
+                        }
+                    }
+                });
             }
         }
+        frame.setVisible(true); // This is to prevent the bug of loading the screen before the components
+
+        plantMines();
+    }
+
+    // Random mine placement
+    void plantMines() {
+        mineList = new ArrayList<>();
+        int mineCount = 10; // For example, 10 mines
+        Random rand = new Random();
+
+        while (mineList.size() < mineCount) {
+            int randRow = rand.nextInt(rows);
+            int randCol = rand.nextInt(cols);
+            Tile tile = mineBoard[randRow][randCol];
+
+            if (!mineList.contains(tile)) {
+                mineList.add(tile);
+            }
+        }
+    }
+
+    // Reveals all the mines when the game is over
+    void revealMines() {
+        for (Tile tile : mineList) {
+            tile.setText("💣");
+        }
+    }
+
+    // Disables all tiles after game is over
+    void disableBoard() {
+        for (int r = 0; r < rows; r++) {
+            for (int c = 0; c < cols; c++) {
+                mineBoard[r][c].setEnabled(false);
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        new MineSweeper();
     }
 }
